@@ -1,0 +1,70 @@
+---
+title: 'Authenticating Quorent API requests'
+description: 'Quorent uses Supabase JWT tokens passed as Bearer credentials. Learn how to obtain your token, attach it to requests, and handle expiry.'
+---
+
+Every protected Quorent API endpoint requires a valid JSON Web Token (JWT) issued by Supabase. The backend verifies each incoming token using the Supabase Auth service before the request is processed. If the token is missing, malformed, or expired, the API responds with an error before your request reaches any route logic.
+
+## How authentication works
+
+Quorent uses the `HTTPBearer` security scheme from FastAPI. When you make a request to any protected endpoint, the backend extracts the token from the `Authorization` header and calls `supabase.auth.get_user(token)` to validate it. If the token is valid, the request proceeds with your user context attached. If not, the API returns a `401 Unauthorized` error.
+
+## Getting your token
+
+Your Bearer token is the `access_token` from your active Supabase session. Sign in to the Quorent app — after a successful Google OAuth sign-in, your session contains an `access_token` that serves as your Bearer token.
+
+If you are building against the API directly, you can retrieve it from the Supabase client after sign-in:
+
+```javascript
+const { data } = await supabase.auth.getSession()
+const token = data.session?.access_token
+```
+
+## Passing the token
+
+Include your token in the `Authorization` header on every request:
+
+```bash
+Authorization: Bearer YOUR_TOKEN
+```
+
+Here is a complete `curl` example:
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+     https://your-api/api/users/me
+```
+
+Replace `YOUR_TOKEN` with your actual `access_token` and `your-api` with your backend's base URL.
+
+## Error responses
+
+| Status | Meaning |
+|---|---|
+| `401 Unauthorized` | Token is missing, invalid, or could not be validated. |
+| `403 Forbidden` | Token is valid but the user does not have permission to access the requested resource. |
+
+When a `401` is returned, the response body includes a `detail` field explaining the reason:
+
+```json
+{
+  "detail": "Could not validate credentials: ..."
+}
+```
+
+## Token expiry and refresh
+
+Supabase access tokens are short-lived. When a token expires, the API returns `401`. Refresh your session using the Supabase client before retrying:
+
+```javascript
+const { data, error } = await supabase.auth.refreshSession()
+const newToken = data.session?.access_token
+```
+
+<Tip>
+  If you are using the Quorent frontend, the Supabase client handles session refresh automatically. You only need to manage token refresh when calling the API directly from your own code.
+</Tip>
+
+<Warning>
+  Never expose your `access_token` in client-side source code, commit it to version control, or include it in public URLs. Treat it with the same care as a password.
+</Warning>

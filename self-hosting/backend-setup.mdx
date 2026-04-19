@@ -1,0 +1,101 @@
+---
+title: 'Running the Quorent FastAPI backend'
+description: 'Install Python dependencies, set environment variables, and start the Quorent API server locally or in production using uvicorn or gunicorn.'
+---
+
+The Quorent backend is a FastAPI application (version 1.0.0, titled "Quorent API") that exposes routes for users, articles, conversations, chat, email digests, and cron triggers. It reads all configuration from environment variables at startup using `pydantic-settings`, so no code changes are needed to configure a new deployment.
+
+## Prerequisites
+
+- Python 3.11 or later
+- `pip`
+- A Supabase project with the required tables created (see [Database setup](/self-hosting/database))
+- API keys for OpenAI, NewsAPI.ai, and Resend
+
+<Steps>
+  <Step title="Clone the repository and enter the backend directory">
+    ```bash
+    git clone <your-repo-url>
+    cd quorent/backend
+    ```
+  </Step>
+
+  <Step title="Create and activate a virtual environment">
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate   # Windows: .venv\Scripts\activate
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    All required packages are pinned in `requirements.txt`. This includes FastAPI, uvicorn, gunicorn, the Supabase Python client, LangChain, OpenAI SDK, EventRegistry, Resend, and Jinja2.
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example file and fill in your values. See [Environment variables](/self-hosting/environment-variables) for a full description of each variable.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    ```bash
+    # .env — fill in real values
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_KEY=your_supabase_anon_key
+    SUPABASE_SERVICE_KEY=your_supabase_service_key
+    OPENAI_API_KEY=sk-...
+    NEWSAPI_KEY=your_newsapi_key
+    RESEND_API_KEY=re_...
+    RESEND_FROM_EMAIL=digest@yourdomain.com
+    CRON_SECRET_TOKEN=a-long-random-secret
+    ENVIRONMENT=development
+    PORT=8000
+    ```
+  </Step>
+
+  <Step title="Start the development server">
+    Use uvicorn with `--reload` during development. The server listens on the port defined by the `PORT` environment variable (default `8000`).
+
+    ```bash
+    uvicorn app.main:app --reload --port 8000
+    ```
+
+    The root endpoint at `http://localhost:8000/` returns `{"message": "Welcome to Quorent API"}` when the server is running correctly.
+  </Step>
+</Steps>
+
+## Production deployment
+
+For production, use gunicorn as the process manager with uvicorn workers. gunicorn is included in `requirements.txt`.
+
+```bash
+gunicorn app.main:app \
+  --workers 4 \
+  --worker-class uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:$PORT
+```
+
+<Warning>
+  The backend is currently configured with `allow_origins=["*"]`, meaning it accepts requests from any origin. Before exposing the API publicly, restrict this to your frontend's domain by updating the `CORSMiddleware` configuration in `app/main.py`.
+</Warning>
+
+<Tip>
+  Set `ENVIRONMENT=production` in your environment file. The application reads this value from `pydantic-settings` and it can be used to toggle debug behaviour.
+</Tip>
+
+## API routers
+
+The following route groups are mounted at startup:
+
+| Router | Prefix | Description |
+|---|---|---|
+| `users` | `/api/users` | User profile management |
+| `articles` | `/api/articles` | Article fetching and search |
+| `conversations` | `/api/conversations` | Conversation history |
+| `chat` | `/api/chat` | AI chat completions |
+| `email_digests` | `/api/email-digests` | Digest retrieval and sending |
+| `cron` | `/api/cron` | Scheduled job endpoints (token-protected) |

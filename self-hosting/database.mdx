@@ -1,0 +1,286 @@
+---
+title: 'Quorent database schema and Supabase setup'
+description: 'Set up the Supabase project for Quorent: create tables, enable Row Level Security, and register the vector search function used by the AI assistant.'
+---
+
+Quorent uses Supabase for both authentication and the application database (PostgreSQL). The backend maintains two client modes: a privileged service-role client (`get_db`) for server-side operations that bypass Row Level Security, and a user-scoped client (`get_user_db`) that sets the user's JWT token so that RLS policies are enforced for all user-facing reads and writes. You must create the tables, policies, and the `match_articles` RPC function described on this page before the backend will function correctly.
+
+## Enable pgvector
+
+The `articles` table stores OpenAI embeddings in a `vector` column for semantic search. You must enable the `pgvector` extension in your Supabase project first.
+
+In the Supabase dashboard, go to **Database → Extensions**, search for `vector`, and enable it. Alternatively, run:
+
+```sql
+create extension if not exists vector;
+```
+
+## Tables
+
+### `users`
+
+Stores user profile data that extends the built-in Supabase auth user. The `id` column is a foreign key to `auth.users`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | Primary key, references `auth.users.id` |
+| `email` | `text` | User's email address |
+| `full_name` | `text` | Optional display name |
+| `interests` | `text[]` | Array of topic interests used to personalize article fetching |
+| `email_digest_enabled` | `boolean` | Whether the user receives daily email digests (default `true`) |
+| `preferred_digest_time` | `text` | 24-hour time string, e.g. `"09:00"` |
+| `preferred_digest_timezone` | `text` | IANA timezone string, e.g. `"UTC"` |
+| `onboarding_completed` | `boolean` | Set to `true` after the user completes the onboarding flow |
+| `created_at` | `timestamptz` | Row creation timestamp |
+| `updated_at` | `timestamptz` | Last update timestamp |
+
+```sql
+create table users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  full_name text,
+  interests text[] default '{}',
+  email_digest_enabled boolean default true,
+  preferred_digest_time text default '09:00',
+  preferred_digest_timezone text default 'UTC',
+  onboarding_completed boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+```
+
+### `articles`
+
+Stores news articles fetched from NewsAPI.ai for each user. The `embedding` column holds the OpenAI vector representation used by `match_articles` for semantic search.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | Primary key |
+| `user_id` | `uuid` | References `users.id` |
+| `title` | `text` | Article headline |
+| `body` | `text` | Full article text (nullable) |
+| `description` | `text` | Short summary (nullable) |
+| `url` | `text` | Canonical article URL |
+| `image_url` | `text` | Thumbnail URL (nullable) |
+| `source` | `text` | Publisher name (nullable) |
+| `author` | `text` | Byline (nullable) |
+| `published_at` | `timestamptz` | Original publish timestamp (nullable) |
+| `sentiment` | `float8` | Sentiment score in range [-1, 1] (nullable) |
+| `concepts` | `jsonb` | Concept/entity metadata from EventRegistry (nullable) |
+| `social_shares` | `integer` | Social engagement count (default `0`) |
+| `fetch_date` | `date` | Date the article was retrieved |
+| `embedding` | `vector(1536)` | OpenAI embedding for semantic search |
+| `created_at` | `timestamptz` | Row creation timestamp |
+
+```sql
+create table articles (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  title text not null,
+  body text,
+  description text,
+  url text not null,
+  image_url text,
+  source text,
+  author text,
+  published_at timestamptz,
+  sentiment float8,
+  concepts jsonb,
+  social_shares integer default 0,
+  fetch_date date not null,
+  embedding vector(1536),
+  created_at timestamptz default now()
+);
+```
+
+### `conversations`
+
+Stores AI chat sessions. Each conversation belongs to a user and has a generated title.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | Primary key |
+| `user_id` | `uuid` | References `users.id` |
+| `title` | `text` | Auto-generated conversation title |
+| `created_at` | `timestamptz` | Creation timestamp |
+| `updated_at` | `timestamptz` | Last activity timestamp |
+
+```sql
+create table conversations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  title text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+```
+
+### `messages`
+
+Stores individual messages within a conversation. The `role` column is either `user` or `assistant`. The `sources` column holds article references cited in assistant responses.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | Primary key |
+| `conversation_id` | `uuid` | References `conversations.id` |
+| `role` | `text` | `'user'` or `'assistant'` |
+| `content` | `text` | Message text |
+| `sources` | `jsonb` | Array of `{title, url, relevance}` objects (nullable) |
+| `article_id` | `uuid` | Optional article context for the message (nullable) |
+| `created_at` | `timestamptz` | Creation timestamp |
+
+```sql
+create table messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references conversations(id) on delete cascade,
+  role text not null check (role in ('user', 'assistant')),
+  content text not null,
+  sources jsonb,
+  article_id uuid references articles(id) on delete set null,
+  created_at timestamptz default now()
+);
+```
+
+### `email_digests`
+
+Records each email digest generated and sent to a user. The `articles` column is a JSONB array of simplified article objects. The `status` column tracks the lifecycle of the digest.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` | Primary key |
+| `user_id` | `uuid` | References `users.id` |
+| `articles` | `jsonb` | Array of `{title, url, description, source, published_at, image_url}` |
+| `summary` | `text` | AI-generated digest summary (nullable) |
+| `status` | `text` | Delivery status: `queued`, `sent`, or `failed` (default `'queued'`) |
+| `is_fallback` | `boolean` | `true` if the digest used fallback content |
+| `fallback_type` | `text` | Reason for fallback (nullable) |
+| `error_message` | `text` | Error detail on failure (nullable) |
+| `created_at` | `timestamptz` | Creation timestamp |
+| `sent_at` | `timestamptz` | Delivery timestamp (nullable) |
+
+```sql
+create table email_digests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  articles jsonb default '[]',
+  summary text,
+  status text not null default 'queued',
+  is_fallback boolean default false,
+  fallback_type text,
+  error_message text,
+  created_at timestamptz default now(),
+  sent_at timestamptz
+);
+```
+
+### `news_cache`
+
+Caches fetched article lists per user as a fallback when the NewsAPI.ai / EventRegistry call fails. The backend checks this table for articles fetched within the past 2 days before falling back to an empty digest.
+
+```sql
+create table news_cache (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  articles jsonb not null,
+  fetch_date date not null,
+  source text,
+  created_at timestamptz default now()
+);
+```
+
+## Vector search function
+
+The `match_articles` RPC function is called by the backend to perform semantic article search. It compares query embeddings against the `embedding` column in `articles` using cosine distance and returns the most similar results for the authenticated user.
+
+```sql
+create or replace function match_articles(
+  query_embedding vector(1536),
+  match_threshold float,
+  match_count int,
+  filter_user_id uuid
+)
+returns table (
+  id uuid,
+  title text,
+  body text,
+  url text,
+  similarity float,
+  published_at timestamptz,
+  source text,
+  image_url text
+)
+language sql stable
+as $$
+  select
+    articles.id,
+    articles.title,
+    articles.body,
+    articles.url,
+    1 - (articles.embedding <=> query_embedding) as similarity,
+    articles.published_at,
+    articles.source,
+    articles.image_url
+  from articles
+  where
+    articles.user_id = filter_user_id
+    and articles.embedding is not null
+    and 1 - (articles.embedding <=> query_embedding) > match_threshold
+  order by articles.embedding <=> query_embedding
+  limit match_count;
+$$;
+```
+
+## Row Level Security
+
+Enable RLS on all tables and create policies so that users can only access their own rows. The backend uses the anon key plus the user's JWT token (`get_user_db`) for user-facing operations, and the service-role key (`get_db`) for privileged server-side operations that bypass RLS.
+
+```sql
+-- Enable RLS
+alter table users enable row level security;
+alter table articles enable row level security;
+alter table conversations enable row level security;
+alter table messages enable row level security;
+alter table email_digests enable row level security;
+
+-- Users table policies
+create policy "Users can read own profile"
+  on users for select using (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on users for update using (auth.uid() = id);
+
+-- Articles table policies
+create policy "Users can read own articles"
+  on articles for select using (auth.uid() = user_id);
+
+-- Conversations table policies
+create policy "Users can manage own conversations"
+  on conversations for all using (auth.uid() = user_id);
+
+-- Messages table policies (via conversation ownership)
+create policy "Users can manage own messages"
+  on messages for all using (
+    auth.uid() = (
+      select user_id from conversations where id = conversation_id
+    )
+  );
+
+-- Email digests table policies
+create policy "Users can read own digests"
+  on email_digests for select using (auth.uid() = user_id);
+```
+
+<Warning>
+  The `news_cache` table stores cached API responses and does not contain user data. Do not enable RLS on it, or restrict access to the service role only.
+</Warning>
+
+<Tip>
+  Create indexes on `user_id` columns and on the `embedding` column using `ivfflat` or `hnsw` for fast vector similarity search at scale.
+
+  ```sql
+  create index on articles using hnsw (embedding vector_cosine_ops);
+  create index on articles (user_id);
+  create index on conversations (user_id);
+  create index on email_digests (user_id);
+  ```
+</Tip>

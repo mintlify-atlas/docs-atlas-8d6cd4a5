@@ -1,0 +1,140 @@
+---
+title: 'Running the Quorent React frontend'
+description: 'Install Node dependencies, configure your backend URL, and run or build the Quorent Vite + React 19 frontend for development or production.'
+---
+
+The Quorent frontend is a Vite 5 + React 19 + TypeScript application styled with TailwindCSS 4. It communicates with the FastAPI backend through a single environment variable (`VITE_API_URL`), and uses the Supabase JS client directly for authentication. Vercel is the recommended deployment platform — a `vercel.json` rewrite rule is already included to support client-side routing.
+
+## Prerequisites
+
+- Node.js 18 or later
+- npm (bundled with Node.js)
+- A running Quorent backend (see [Backend setup](/self-hosting/backend-setup))
+- A Supabase project (for the anon key and project URL)
+
+<Steps>
+  <Step title="Enter the frontend directory">
+    ```bash
+    cd quorent/frontend
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example file and set your values. `VITE_API_URL` must point to the root of your running FastAPI backend, without a trailing slash.
+
+    ```bash
+    cp .env.local.example .env.local
+    ```
+
+    ```bash
+    # .env.local
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    VITE_API_URL=http://localhost:8000
+    ```
+
+    <Note>
+      In production, set `VITE_API_URL` to your deployed backend URL, for example `https://api.yourdomain.com`. The anon key is safe to expose in the browser — it is restricted by Supabase Row Level Security policies.
+    </Note>
+  </Step>
+
+  <Step title="Start the development server">
+    <CodeGroup>
+
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    </CodeGroup>
+
+    Vite starts a local dev server, typically at `http://localhost:5173`. Hot module replacement is enabled by default.
+  </Step>
+
+  <Step title="Build for production">
+    The build command runs TypeScript compilation followed by a Vite production build. Output goes to the `dist/` directory.
+
+    <CodeGroup>
+
+    ```bash npm
+    npm run build
+    ```
+
+    ```bash yarn
+    yarn build
+    ```
+
+    </CodeGroup>
+  </Step>
+
+  <Step title="Preview the production build locally">
+    <CodeGroup>
+
+    ```bash npm
+    npm run preview
+    ```
+
+    ```bash yarn
+    yarn preview
+    ```
+
+    </CodeGroup>
+
+    This serves the `dist/` directory locally so you can verify the production build before deploying.
+  </Step>
+</Steps>
+
+## Deploying to Vercel
+
+Vercel is the recommended hosting platform for the frontend. The repository includes a `vercel.json` that configures a catch-all rewrite to `index.html`, which is required for React Router's client-side navigation.
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+**To deploy:**
+
+1. Push your frontend directory to a GitHub repository.
+2. Import the project in the Vercel dashboard.
+3. Set the root directory to `frontend` (or the path containing `package.json`).
+4. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_URL` as environment variables in the Vercel project settings.
+5. Deploy. Vercel detects the Vite framework automatically.
+
+<Tip>
+  If you deploy the backend to a service like Railway or Render, set `VITE_API_URL` in your Vercel environment variables to the backend's public URL before deploying.
+</Tip>
+
+## Technology stack
+
+| Package | Version | Purpose |
+|---|---|---|
+| `react` | ^19.2.4 | UI framework |
+| `vite` | ^5.4.21 | Build tool and dev server |
+| `typescript` | ~5.9.3 | Static typing |
+| `tailwindcss` | ^4.2.2 | Utility-first CSS |
+| `react-router-dom` | ^7.13.2 | Client-side routing |
+| `@supabase/supabase-js` | ^2.100.0 | Auth and DB client |
+| `lucide-react` | ^1.7.0 | Icon library |

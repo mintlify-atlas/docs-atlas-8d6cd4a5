@@ -1,0 +1,86 @@
+---
+title: "Email digests: your morning AI news briefing"
+description: "Quorent automatically compiles and emails you a daily AI-written summary of the top articles fetched across your configured interest topics."
+---
+
+Email digests are Quorent's way of delivering a curated, AI-summarized briefing to your inbox on a schedule you choose. Each digest is built from the articles Quorent fetches for you based on your interests, condensed into a single readable summary. You do not need to open the app to stay informed — the digest comes to you.
+
+## How a digest is generated
+
+Quorent follows a four-step process to build each digest:
+
+<Steps>
+  <Step title="Fetch articles">
+    Quorent queries news sources for content matching your interest topics and stores the results in your article library.
+  </Step>
+  <Step title="Generate an AI summary">
+    The fetched articles are passed to an AI summarization model, which produces a concise written briefing covering the most significant stories.
+  </Step>
+  <Step title="Queue the digest">
+    The digest is saved with a status of `queued` and held until your scheduled delivery time.
+  </Step>
+  <Step title="Send the email">
+    At your preferred time, the digest is emailed to your registered address and its status is updated to `sent`.
+  </Step>
+</Steps>
+
+## Digest statuses
+
+Every digest has one of three statuses, visible in the **Latest Digest** panel on your Dashboard:
+
+| Status | Meaning |
+|---|---|
+| `queued` | Generated and waiting to be sent at the scheduled time |
+| `sent` | Successfully delivered to your inbox |
+| `failed` | Something went wrong during delivery |
+
+## Fallback behavior
+
+If Quorent cannot fetch fresh articles at the time a digest is scheduled — for example, due to a news API issue — it automatically tries a **cache fallback**: it looks for articles fetched within the past 2 days and uses those instead.
+
+If no cached articles are available either, a digest is still created but marked as a fallback with no articles or summary. You will see a **Cached data** label next to the status badge on your Dashboard whenever a digest used cached content.
+
+<Note>
+  Fallback digests ensure you always receive a digest record, even if live news could not be fetched. The Dashboard panel will indicate when cached data was used.
+</Note>
+
+## Viewing digest history
+
+The **Latest Digest** panel on your [Dashboard](/features/dashboard) always shows your most recent digest. It includes:
+
+- Status badge (`queued`, `sent`, or `failed`)
+- The AI-generated summary text
+- Creation date, send time, and article count
+
+To review older digests, check your email inbox where past digest emails are stored by your email client.
+
+## Enabling and disabling digests
+
+You can turn email digests on or off at any time from [Settings](/configuration/account). When digests are disabled, Quorent will not generate or send new ones, but your article feed continues to update as normal.
+
+Your current digest status is shown in the **Delivery** section of the Dashboard sidebar:
+
+- **Enabled** — digests are being generated and sent on schedule
+- **Disabled** — no digests will be sent until you re-enable them
+
+## Delivery timing
+
+You choose when your digest arrives by setting a preferred delivery time and timezone in [Digest Settings](/configuration/digest-settings). The Dashboard sidebar displays your current delivery configuration:
+
+- **Time** — the local time you've chosen for delivery
+- **Timezone** — the timezone Quorent uses to interpret that time
+
+<Tip>
+  Setting your digest to arrive before you start your day means the briefing is waiting in your inbox when you need it most.
+</Tip>
+
+## Triggering a digest manually
+
+If you want to generate a digest outside of the regular schedule, you can do so via the API:
+
+```bash
+curl -X POST https://your-quorent-instance.com/api/email-digests/DIGEST_ID/send \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+This sends a specific digest that is in `queued` status. To find a queued digest ID, call `GET /api/email-digests?status_filter=queued` and use the `id` from the response. Only digests with `status: "queued"` can be sent this way. See the [API reference](/api-reference/email-digests) for full details.

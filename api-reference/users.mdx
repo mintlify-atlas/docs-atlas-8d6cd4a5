@@ -1,0 +1,167 @@
+---
+title: 'REST API endpoints for user management'
+description: "Read, update, and delete the authenticated user's profile, interests, digest preferences, and onboarding status via the /api/users routes."
+---
+
+The users endpoints let you read and modify the profile of the currently authenticated user. All three routes operate on `/api/users/me` — there are no admin routes for querying other users. Authentication is required on every request; see [Authentication](/api-reference/authentication) for details on obtaining and attaching your Bearer token.
+
+## GET /api/users/me
+
+Returns the full profile for the currently authenticated user, including their topic interests, email digest settings, and onboarding status.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique user identifier (UUID).
+</ResponseField>
+
+<ResponseField name="email" type="string" required>
+  Email address associated with the account.
+</ResponseField>
+
+<ResponseField name="full_name" type="string">
+  Display name of the user. May be `null` if not set.
+</ResponseField>
+
+<ResponseField name="interests" type="string[]" required>
+  List of topic interest strings used to personalise article feeds and email digests. Defaults to an empty array.
+</ResponseField>
+
+<ResponseField name="email_digest_enabled" type="boolean" required>
+  Whether scheduled email digests are active for this user. Defaults to `true`.
+</ResponseField>
+
+<ResponseField name="preferred_digest_time" type="string" required>
+  Preferred delivery time for email digests in 24-hour `HH:MM` format. Defaults to `"09:00"`.
+</ResponseField>
+
+<ResponseField name="preferred_digest_timezone" type="string" required>
+  IANA timezone string for the preferred digest delivery time. Defaults to `"UTC"`.
+</ResponseField>
+
+<ResponseField name="onboarding_completed" type="boolean" required>
+  Whether the user has finished the onboarding flow. Defaults to `false`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of account creation.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of the most recent profile update.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | User profile record does not exist. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET https://your-api/api/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## PUT /api/users/me
+
+Updates one or more fields on the authenticated user's profile. Only the fields you include in the request body are changed; omitted fields remain unchanged. At least one field must be provided.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Request body
+
+<ParamField body="interests" type="string[]">
+  Replacement list of topic interests. Passing an empty array clears all interests.
+</ParamField>
+
+<ParamField body="email_digest_enabled" type="boolean">
+  Enable or disable scheduled email digest delivery.
+</ParamField>
+
+<ParamField body="preferred_digest_time" type="string">
+  Preferred delivery time in 24-hour `HH:MM` format (e.g. `"16:00"` for 4 pm). Must match the pattern `HH:MM`.
+</ParamField>
+
+<ParamField body="preferred_digest_timezone" type="string">
+  IANA timezone string (e.g. `"America/New_York"`).
+</ParamField>
+
+<ParamField body="onboarding_completed" type="boolean">
+  Mark the onboarding flow as complete. Can only be set to `true`; setting it to `false` returns a validation error.
+</ParamField>
+
+### Response fields
+
+Returns the updated `UserResponse` object. Field descriptions are the same as [GET /api/users/me](#get-apiusersme).
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | No fields provided, or a field value fails validation (e.g. invalid time format, `onboarding_completed: false`). |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | User profile record does not exist. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X PUT https://your-api/api/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "interests": ["technology", "climate", "economics"],
+    "preferred_digest_time": "08:00",
+    "preferred_digest_timezone": "America/Chicago"
+  }'
+```
+
+</CodeGroup>
+
+---
+
+## DELETE /api/users/me
+
+Permanently deletes the authenticated user's account. This action removes the Supabase Auth user record and cascades to all related application data. It cannot be undone.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+<Warning>
+  This operation is irreversible. All user data — articles, conversations, and digests — is permanently removed as a result of the cascade delete.
+</Warning>
+
+### Response
+
+Returns `204 No Content` with an empty body on success.
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `500 Internal Server Error` | Account deletion failed server-side. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://your-api/api/users/me \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>

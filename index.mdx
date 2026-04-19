@@ -1,97 +1,50 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Quorent: Your AI-Powered News Assistant"
+description: "Quorent curates personalized news feeds from thousands of sources, delivers daily AI-summarized email digests, and lets you chat with Quill — your AI news correspondent."
 ---
 
-## Setting up
+Quorent is a personalized AI news assistant that learns your interests and surfaces the stories that matter most to you. Each day, Quorent fetches articles from thousands of sources, generates an AI-powered digest summary, and delivers it to your inbox. When you want to go deeper, Quill — your in-app AI correspondent — is ready to answer questions, find patterns, and help you understand what you're reading.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Create your account, set your interests, and receive your first personalized news digest in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Onboarding Guide" icon="list-check" href="/onboarding">
+    Step-by-step walkthrough of selecting topics and configuring your daily digest delivery.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Ask Quill (AI Chat)" icon="message-bot" href="/features/ai-chat">
+    Chat with your AI news correspondent to explore articles, find trends, and get answers.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Email Digests" icon="envelope-open-text" href="/features/email-digests">
+    Get an AI-summarized briefing of today's top stories delivered to your inbox every morning.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What Quorent does
 
-Everything you need to create world-class documentation.
+Quorent connects your interests to the news in three ways:
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+- **Personalized article feed** — Articles are fetched daily from NewsAPI.ai based on the topics you choose during onboarding. Your feed updates every day with fresh, relevant content.
+- **AI email digests** — Every morning, Quorent compiles your articles into a concise, AI-generated summary and sends it to your inbox at your preferred time and timezone.
+- **Quill AI chat** — Ask Quill anything about your articles. It uses semantic search to find relevant content and answers your questions in natural language.
 
-## Need inspiration?
+## Explore the docs
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="gauge" href="/features/dashboard">
+    View your article feed, digest status, and interests at a glance.
+  </Card>
+  <Card title="Your Articles" icon="newspaper" href="/features/articles">
+    Browse, filter, and search your personalized article library.
+  </Card>
+  <Card title="Configure Interests" icon="sliders" href="/configuration/interests">
+    Add or update the topics that shape your daily news feed.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Explore the full REST API powering Quorent's backend.
+  </Card>
+</CardGroup>
+
+<Note>
+  Quorent is a hosted product available at [quorent-rho.vercel.app](https://quorent-rho.vercel.app). If you want to run your own instance, see the [Self-Hosting guide](/self-hosting/overview).
+</Note>

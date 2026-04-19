@@ -1,0 +1,86 @@
+---
+title: 'REST API endpoint for AI chat (Quill)'
+description: 'Send messages to Quill, the Quorent AI news assistant, and receive answers grounded in your article library with source citations.'
+---
+
+The chat endpoint powers Quill, the AI news assistant built into Quorent. You send a message and Quill replies with an answer drawn from your personal article library, along with citations to the articles it used. Each exchange is persisted to a conversation, which you can retrieve or delete via the [conversations endpoints](/api-reference/conversations). If you do not supply a `conversation_id`, a new conversation is created automatically. Authentication is required; see [Authentication](/api-reference/authentication) for details.
+
+## POST /api/chat
+
+Sends a message to Quill and returns an AI-generated answer with source citations. Creates a new conversation if `conversation_id` is not provided. The user message and the assistant response are both saved to the conversation.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Request body
+
+<ParamField body="message" type="string" required>
+  The message to send to Quill. Must be a non-empty string. Leading and trailing whitespace is stripped before processing.
+</ParamField>
+
+<ParamField body="conversation_id" type="string">
+  UUID of an existing conversation to continue. If omitted, a new conversation is created and its ID is returned in the response. The conversation must belong to the authenticated user.
+</ParamField>
+
+<ParamField body="article_id" type="string">
+  UUID of a specific article to ground the response in. When provided, Quill focuses its answer on that article's content. May be omitted for a general query across your library.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="conversation_id" type="string" required>
+  UUID of the conversation this message belongs to. Use this value in subsequent requests to continue the same conversation.
+</ResponseField>
+
+<ResponseField name="answer" type="string" required>
+  Quill's response to your message.
+</ResponseField>
+
+<ResponseField name="sources" type="object[]" required>
+  Articles that Quill cited when composing its answer. An empty array means no specific sources were referenced.
+  <Expandable title="source properties">
+    <ResponseField name="title" type="string" required>
+      Headline of the source article.
+    </ResponseField>
+    <ResponseField name="url" type="string" required>
+      Canonical URL of the source article.
+    </ResponseField>
+    <ResponseField name="relevance" type="number">
+      Similarity score between the query and this source, from `0` to `1`. May be `null` if not available.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | `message` is empty or whitespace only. |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `403 Forbidden` | The specified `conversation_id` belongs to a different user. |
+| `404 Not Found` | The specified `conversation_id` does not exist. |
+| `500 Internal Server Error` | Conversation creation, AI generation, or message persistence failed. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl — new conversation
+curl -X POST https://your-api/api/chat \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What are the latest developments in AI regulation?"
+  }'
+```
+
+```bash curl — continue conversation
+curl -X POST https://your-api/api/chat \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Which countries have passed binding legislation so far?",
+    "conversation_id": "c1d2e3f4-a5b6-7890-abcd-ef1234567890"
+  }'
+```
+
+</CodeGroup>

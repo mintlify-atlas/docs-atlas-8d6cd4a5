@@ -1,0 +1,301 @@
+---
+title: 'REST API endpoints for articles'
+description: 'List, retrieve, and semantically search the news articles in your Quorent library using pagination, filters, and vector-based similarity search.'
+---
+
+The articles endpoints expose the news articles that Quorent has fetched and associated with your account. You can paginate and filter the full list, fetch a single article by ID including its body content, or run a semantic search powered by vector embeddings to find articles by meaning rather than exact keywords. All routes require a valid Bearer token; see [Authentication](/api-reference/authentication) for details.
+
+## GET /api/articles
+
+Returns a paginated list of articles belonging to the authenticated user. Results are scoped to your account via row-level security and never include other users' data.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Query parameters
+
+<ParamField query="limit" type="number" default="20">
+  Number of articles to return per page. Must be between `1` and `100`.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of articles to skip before returning results. Use with `limit` for pagination.
+</ParamField>
+
+<ParamField query="sort" type="string" default="created_at">
+  Field to sort results by. Accepted values: `created_at`, `published_at`.
+</ParamField>
+
+<ParamField query="order" type="string" default="desc">
+  Sort direction. Accepted values: `asc`, `desc`.
+</ParamField>
+
+<ParamField query="source" type="string">
+  Filter by news source name (e.g. `"BBC News"`). Returns only articles whose `source` field matches exactly.
+</ParamField>
+
+<ParamField query="fetch_date" type="string">
+  Filter by the date articles were fetched, in `YYYY-MM-DD` format (e.g. `"2024-11-15"`).
+</ParamField>
+
+### Response fields
+
+<ResponseField name="articles" type="object[]" required>
+  Array of article list items.
+  <Expandable title="article properties">
+    <ResponseField name="id" type="string" required>
+      Unique article identifier (UUID).
+    </ResponseField>
+    <ResponseField name="user_id" type="string" required>
+      ID of the user this article belongs to.
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      Article headline.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Short summary or standfirst. May be `null`.
+    </ResponseField>
+    <ResponseField name="url" type="string" required>
+      Canonical URL of the original article.
+    </ResponseField>
+    <ResponseField name="image_url" type="string">
+      URL of the article's primary image. May be `null`.
+    </ResponseField>
+    <ResponseField name="source" type="string">
+      Name of the news source. May be `null`.
+    </ResponseField>
+    <ResponseField name="author" type="string">
+      Author byline. May be `null`.
+    </ResponseField>
+    <ResponseField name="published_at" type="string">
+      ISO 8601 timestamp of original publication. May be `null`.
+    </ResponseField>
+    <ResponseField name="sentiment" type="number">
+      Sentiment score between `-1.0` (negative) and `1.0` (positive). May be `null`.
+    </ResponseField>
+    <ResponseField name="concepts" type="object">
+      Key concept and entity extraction data. May be `null`.
+    </ResponseField>
+    <ResponseField name="social_shares" type="number" required>
+      Total social share count. Defaults to `0`.
+    </ResponseField>
+    <ResponseField name="fetch_date" type="string" required>
+      Date the article was fetched in `YYYY-MM-DD` format.
+    </ResponseField>
+    <ResponseField name="created_at" type="string" required>
+      ISO 8601 timestamp of record creation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number" required>
+  Total number of articles matching the applied filters.
+</ResponseField>
+
+<ResponseField name="limit" type="number" required>
+  The `limit` value used for this response.
+</ResponseField>
+
+<ResponseField name="offset" type="number" required>
+  The `offset` value used for this response.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` when additional pages are available beyond the current response.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | Invalid `sort` or `order` value. |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET "https://your-api/api/articles?limit=10&sort=published_at&order=desc&source=Reuters" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## GET /api/articles/{article_id}
+
+Returns a single article by its UUID, including the full body content. The article must belong to the authenticated user.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Path parameters
+
+<ParamField path="article_id" type="string" required>
+  UUID of the article to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique article identifier.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  ID of the owning user.
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Article headline.
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  Full article text content. May be `null` if the body was not extracted.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Short summary or standfirst. May be `null`.
+</ResponseField>
+
+<ResponseField name="url" type="string" required>
+  Canonical URL of the original article.
+</ResponseField>
+
+<ResponseField name="image_url" type="string">
+  URL of the primary image. May be `null`.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  Name of the news source. May be `null`.
+</ResponseField>
+
+<ResponseField name="author" type="string">
+  Author byline. May be `null`.
+</ResponseField>
+
+<ResponseField name="published_at" type="string">
+  ISO 8601 timestamp of original publication. May be `null`.
+</ResponseField>
+
+<ResponseField name="sentiment" type="number">
+  Sentiment score from `-1.0` to `1.0`. May be `null`.
+</ResponseField>
+
+<ResponseField name="concepts" type="object">
+  Extracted key concept and entity data. May be `null`.
+</ResponseField>
+
+<ResponseField name="social_shares" type="number" required>
+  Total social share count. Defaults to `0`.
+</ResponseField>
+
+<ResponseField name="fetch_date" type="string" required>
+  Date the article was fetched in `YYYY-MM-DD` format.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of record creation.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | No article with the given ID exists for this user. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET https://your-api/api/articles/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## POST /api/articles/search
+
+Runs a semantic similarity search across your articles using vector embeddings. The query is converted to an embedding and matched against stored article embeddings using cosine similarity. Returns results ordered by relevance, filtered to those above the similarity threshold.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Request body
+
+<ParamField body="query" type="string" required>
+  Natural language search query. For example: `"central bank interest rate decisions"`.
+</ParamField>
+
+<ParamField body="threshold" type="number" default="0.7">
+  Minimum cosine similarity score for a result to be included. Must be between `0` and `1`. Higher values return fewer but more relevant results.
+</ParamField>
+
+<ParamField body="limit" type="number" default="10">
+  Maximum number of results to return. Must be between `1` and `50`.
+</ParamField>
+
+### Response fields
+
+Returns an array of search result objects.
+
+<ResponseField name="id" type="string" required>
+  Unique article identifier.
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Article headline.
+</ResponseField>
+
+<ResponseField name="body" type="string">
+  Full article text content. May be `null`.
+</ResponseField>
+
+<ResponseField name="url" type="string" required>
+  Canonical URL of the article.
+</ResponseField>
+
+<ResponseField name="similarity" type="number" required>
+  Cosine similarity score between the query embedding and this article's embedding. Higher is more relevant.
+</ResponseField>
+
+<ResponseField name="published_at" type="string">
+  ISO 8601 publication timestamp. May be `null`.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  News source name. May be `null`.
+</ResponseField>
+
+<ResponseField name="image_url" type="string">
+  Primary image URL. May be `null`.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | `limit` or `threshold` out of range. |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `500 Internal Server Error` | Embedding generation or database query failed. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X POST https://your-api/api/articles/search \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "renewable energy investment trends",
+    "threshold": 0.75,
+    "limit": 5
+  }'
+```
+
+</CodeGroup>

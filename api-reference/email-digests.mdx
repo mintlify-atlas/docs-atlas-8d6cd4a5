@@ -1,0 +1,243 @@
+---
+title: 'REST API endpoints for email digests'
+description: 'List, retrieve, and send your Quorent email digests. Digests summarise your personalised news feed and are delivered to your inbox on a schedule.'
+---
+
+The email digests endpoints expose the scheduled news digest records generated for your account. Quorent creates digests automatically based on your preferred delivery time and topic interests. Each digest contains a curated list of articles and an AI-generated summary. You can list all your digests with optional status filtering, fetch the full content of a single digest, or trigger immediate delivery for any digest that is in the `queued` state. All routes require a valid Bearer token; see [Authentication](/api-reference/authentication) for details.
+
+## GET /api/email-digests
+
+Returns a paginated list of email digest records for the authenticated user, sorted by creation date descending (most recent first).
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Query parameters
+
+<ParamField query="limit" type="number" default="20">
+  Number of digests to return per page. Must be between `1` and `100`.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of digests to skip before returning results. Use with `limit` for pagination.
+</ParamField>
+
+<ParamField query="status_filter" type="string">
+  Filter results by digest status. Accepted values: `queued`, `sent`, `failed`. Omit to return all statuses.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="digests" type="object[]" required>
+  Array of digest list items.
+  <Expandable title="digest properties">
+    <ResponseField name="id" type="string" required>
+      Unique digest identifier (UUID).
+    </ResponseField>
+    <ResponseField name="user_id" type="string" required>
+      ID of the user this digest belongs to.
+    </ResponseField>
+    <ResponseField name="summary" type="string">
+      AI-generated summary of the digest's articles. May be `null` if generation failed.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Current delivery status. One of `"queued"`, `"sent"`, or `"failed"`.
+    </ResponseField>
+    <ResponseField name="is_fallback" type="boolean" required>
+      `true` when the digest was generated as a fallback due to insufficient personalised content.
+    </ResponseField>
+    <ResponseField name="fallback_type" type="string">
+      Describes the type of fallback content used. May be `null` when `is_fallback` is `false`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string" required>
+      ISO 8601 timestamp of digest creation.
+    </ResponseField>
+    <ResponseField name="sent_at" type="string">
+      ISO 8601 timestamp of when the digest email was sent. `null` if not yet sent.
+    </ResponseField>
+    <ResponseField name="article_count" type="number">
+      Number of articles included in this digest.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number" required>
+  Total number of digests matching the applied filter.
+</ResponseField>
+
+<ResponseField name="limit" type="number" required>
+  The `limit` value used for this response.
+</ResponseField>
+
+<ResponseField name="offset" type="number" required>
+  The `offset` value used for this response.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` when additional pages are available.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | `status_filter` is not one of the accepted values. |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET "https://your-api/api/email-digests?limit=10&status_filter=queued" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## GET /api/email-digests/{digest_id}
+
+Returns a single email digest by its UUID, including the full list of curated articles and the AI-generated summary.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Path parameters
+
+<ParamField path="digest_id" type="string" required>
+  UUID of the email digest to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique digest identifier.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  ID of the owning user.
+</ResponseField>
+
+<ResponseField name="articles" type="object[]" required>
+  Articles included in this digest.
+  <Expandable title="article properties">
+    <ResponseField name="title" type="string" required>
+      Article headline.
+    </ResponseField>
+    <ResponseField name="url" type="string" required>
+      Canonical URL of the article.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      Short summary of the article. May be `null`.
+    </ResponseField>
+    <ResponseField name="source" type="string">
+      News source name. May be `null`.
+    </ResponseField>
+    <ResponseField name="published_at" type="string">
+      ISO 8601 publication timestamp. May be `null`.
+    </ResponseField>
+    <ResponseField name="image_url" type="string">
+      Primary image URL. May be `null`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+  AI-generated narrative summary of the digest. May be `null` if generation failed.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Delivery status: `"queued"`, `"sent"`, or `"failed"`.
+</ResponseField>
+
+<ResponseField name="is_fallback" type="boolean" required>
+  `true` if fallback content was used.
+</ResponseField>
+
+<ResponseField name="fallback_type" type="string">
+  Type of fallback used. May be `null`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of digest creation.
+</ResponseField>
+
+<ResponseField name="sent_at" type="string">
+  ISO 8601 timestamp of delivery. `null` if not yet sent.
+</ResponseField>
+
+<ResponseField name="error_message" type="string">
+  Error detail if the digest has `status: "failed"`. May be `null`.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | No digest with the given ID exists for this user. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET https://your-api/api/email-digests/d1e2f3a4-b5c6-7890-abcd-ef1234567890 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## POST /api/email-digests/{digest_id}/send
+
+Immediately sends the specified digest to the authenticated user's email address. Only digests with a status of `"queued"` can be sent. Digests with status `"sent"` or `"failed"` cannot be re-sent through this endpoint. Sending is also blocked if the user has `email_digest_enabled` set to `false`.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+<Note>
+  Only `queued` digests can be sent via this endpoint. To resend a previously delivered digest, contact support or generate a new one.
+</Note>
+
+### Path parameters
+
+<ParamField path="digest_id" type="string" required>
+  UUID of the email digest to send.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="success" type="boolean" required>
+  `true` when the email was dispatched successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  Human-readable status message (e.g. `"Email digest sent successfully"`).
+</ResponseField>
+
+<ResponseField name="email_id" type="string">
+  Identifier returned by the email delivery provider. May be `null` if not available.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400 Bad Request` | Email digests are disabled for this user, or the digest status is not `queued`. |
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | No digest with the given ID exists for this user. |
+| `500 Internal Server Error` | Email delivery failed. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X POST https://your-api/api/email-digests/d1e2f3a4-b5c6-7890-abcd-ef1234567890/send \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>

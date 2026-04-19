@@ -1,0 +1,67 @@
+---
+title: 'Quorent REST API overview and base URL'
+description: 'The Quorent REST API exposes JSON endpoints for users, articles, chat, conversations, and email digests. All requests require a Bearer token.'
+---
+
+The Quorent REST API is a FastAPI-based HTTP API running at version 1.0.0. All endpoints are served under the `/api/` path prefix and communicate exclusively in JSON — both request bodies and response payloads. Authentication via a Supabase Bearer token is required on every endpoint except the internal cron routes.
+
+## Base URL
+
+When running locally, the server listens on port `8000` by default:
+
+```bash
+http://localhost:8000
+```
+
+All API endpoints are prefixed with `/api/`:
+
+```bash
+http://localhost:8000/api/
+```
+
+<Note>
+  In production, replace `http://localhost:8000` with the public URL of your deployed backend.
+</Note>
+
+## Request and response format
+
+Every request that includes a body must send `Content-Type: application/json`. Every response from the API is also JSON. There is no XML or form-encoded support.
+
+```json
+{
+  "Content-Type": "application/json",
+  "Authorization": "Bearer YOUR_TOKEN"
+}
+```
+
+## Authentication
+
+All protected routes require a valid Supabase JWT passed as a Bearer token in the `Authorization` header. Requests without a valid token return a `401 Unauthorized` response. See the [authentication guide](/api-reference/authentication) for details on obtaining and using your token.
+
+<Info>
+  The `/api/cron` routes use a separate `cron_secret_token` for internal scheduled jobs and are not intended for direct API consumers.
+</Info>
+
+## API version
+
+The current API version is **1.0.0**.
+
+## Endpoint groups
+
+<CardGroup cols={2}>
+  <Card title="Users" icon="user" href="/api-reference/users">
+    Manage your account and retrieve your profile. Base path: `/api/users`.
+  </Card>
+  <Card title="Articles" icon="newspaper" href="/api-reference/articles">
+    Fetch, search, and manage news articles in your library. Base path: `/api/articles`.
+  </Card>
+  <Card title="Chat" icon="message" href="/api-reference/chat">
+    Send messages to Quill, the AI news assistant. Base path: `/api/chat`.
+  </Card>
+  <Card title="Conversations" icon="messages" href="/api-reference/conversations">
+    List, retrieve, and delete your chat conversation history. Base path: `/api/conversations`.
+  </Card>
+  <Card title="Email digests" icon="envelope" href="/api-reference/email-digests">
+    Configure and trigger your scheduled email news digests. Base path: `/api/email-digests`.
+  </Card>
+</CardGroup>

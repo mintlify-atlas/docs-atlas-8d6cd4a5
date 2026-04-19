@@ -1,0 +1,83 @@
+---
+title: "Configuring your email digest schedule in Quorent"
+description: "Enable or disable daily email digests, set your preferred delivery time, and choose the timezone Quorent uses to schedule your morning briefing."
+---
+
+Your email digest settings control whether Quorent sends you a daily briefing, what time it arrives, and which timezone is used to interpret that time. You can adjust these at any time from the **Email Digest** section in Settings — changes take effect for the next scheduled delivery.
+
+## What the daily digest contains
+
+Each digest email includes two parts: an **AI-generated summary** of the most significant stories across your interest topics, followed by the list of articles that were fetched. The summary is written fresh for each delivery based on the articles Quorent retrieved during that day's fetch cycle.
+
+## How to configure your digest
+
+<Steps>
+  <Step title="Open Settings">
+    From your Dashboard, click the **Settings** button (gear icon) in the top-right corner of the header.
+  </Step>
+  <Step title="Scroll to Email Digest">
+    The **Email Digest** section appears below **Your Interests**.
+  </Step>
+  <Step title="Enable or disable the digest">
+    Click **On** or **Off** in the toggle at the top of the section to enable or disable your daily briefing. The active selection is shown with a filled background.
+  </Step>
+  <Step title="Set your delivery time">
+    Click the **Delivery time** field and enter the time you want to receive the digest, using 24-hour format (for example, `07:00` for 7 AM or `18:30` for 6:30 PM).
+  </Step>
+  <Step title="Choose your timezone">
+    Open the **Timezone** dropdown and select the timezone that matches your location. Quorent uses this timezone to determine exactly when to send your digest.
+  </Step>
+  <Step title="Save your changes">
+    Click **Save Changes** at the bottom of the page. The button label changes to **Saved ✓** once your preferences are stored.
+  </Step>
+</Steps>
+
+<Tip>
+  Set your digest to arrive 30–60 minutes before your workday starts so the briefing is waiting in your inbox when you need it. A time like `07:00` in your local timezone works well for most people.
+</Tip>
+
+## Available timezones
+
+Quorent supports the following timezones in the delivery settings dropdown:
+
+| Label | Timezone |
+|---|---|
+| UTC | UTC |
+| Eastern Time (US) | America/New_York |
+| Central Time (US) | America/Chicago |
+| Mountain Time (US) | America/Denver |
+| Pacific Time (US) | America/Los_Angeles |
+| São Paulo | America/Sao_Paulo |
+| London | Europe/London |
+| Paris / Berlin | Europe/Paris |
+| Moscow | Europe/Moscow |
+| Dubai | Asia/Dubai |
+| India (IST) | Asia/Kolkata |
+| Singapore | Asia/Singapore |
+| Tokyo | Asia/Tokyo |
+| Shanghai | Asia/Shanghai |
+| Sydney | Australia/Sydney |
+| Auckland | Pacific/Auckland |
+
+During onboarding, Quorent automatically detects your browser's timezone and pre-selects the closest match from this list. If your timezone is not listed, it defaults to UTC.
+
+## When digests are disabled
+
+If you turn digests off, Quorent stops generating and sending new digest emails. Your article feed continues to update normally on its daily fetch cycle — disabling the digest only stops the email delivery. You can re-enable it at any time and delivery will resume from the next scheduled time onward.
+
+<Note>
+  Disabling digests does not delete your digest history. Past digests that were already sent remain in your email inbox.
+</Note>
+
+## How changes take effect
+
+Delivery time and timezone changes are applied immediately when you save. If the new time for the current day has already passed when you save, your next digest will be sent at that time tomorrow.
+
+<CardGroup cols={2}>
+  <Card title="Managing your interests" icon="tags" href="/configuration/interests">
+    Control which topics drive your article feed and digest content.
+  </Card>
+  <Card title="Email digests explained" icon="envelope-open-text" href="/features/email-digests">
+    Learn how Quorent builds and sends your daily briefing.
+  </Card>
+</CardGroup>

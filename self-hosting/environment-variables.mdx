@@ -1,0 +1,104 @@
+---
+title: 'Quorent environment variables reference'
+description: 'Complete reference for all backend and frontend environment variables required to run a self-hosted Quorent instance, with sources and requirements.'
+---
+
+Quorent uses two separate environment files: `backend/.env` for the FastAPI server and `frontend/.env.local` for the Vite build. Backend variables are loaded by `pydantic-settings` at startup — the application will refuse to start if any required variable is missing. Frontend variables are injected at build time by Vite and must be prefixed with `VITE_` to be accessible in the browser.
+
+## Backend variables
+
+Copy `backend/.env.example` to `backend/.env` and fill in the values below.
+
+### Supabase
+
+<ParamField path="env.SUPABASE_URL" type="string" required>
+  The URL of your Supabase project, for example `https://abcdefgh.supabase.co`. Found in your Supabase project settings under **API → Project URL**.
+</ParamField>
+
+<ParamField path="env.SUPABASE_KEY" type="string" required>
+  The `anon` (public) key for your Supabase project. Used by `get_user_db` to create a client that respects Row Level Security when processing requests on behalf of an authenticated user. Found in **API → Project API keys**.
+</ParamField>
+
+<ParamField path="env.SUPABASE_SERVICE_KEY" type="string" required>
+  The `service_role` key for your Supabase project. Used by the privileged `get_db` client to bypass RLS for server-side operations such as cron jobs. Keep this secret — it has full database access. Found in **API → Project API keys**.
+</ParamField>
+
+### OpenAI
+
+<ParamField path="env.OPENAI_API_KEY" type="string" required>
+  Your OpenAI API key, starting with `sk-`. Used to generate text embeddings for article vector search and to power the chat completions in the AI assistant. Obtain one at `platform.openai.com/api-keys`.
+</ParamField>
+
+### NewsAPI.ai
+
+<ParamField path="env.NEWSAPI_KEY" type="string" required>
+  Your EventRegistry / NewsAPI.ai API key. Used by the `eventregistry` Python package to fetch and classify news articles. Sign up at `newsapi.ai` to obtain a key.
+</ParamField>
+
+### Resend
+
+<ParamField path="env.RESEND_API_KEY" type="string" required>
+  Your Resend API key, starting with `re_`. Used to send daily email digests to users. Obtain one from the Resend dashboard after verifying your sending domain.
+</ParamField>
+
+<ParamField path="env.RESEND_FROM_EMAIL" type="string" required>
+  The sender email address for outgoing digest emails, for example `digest@yourdomain.com`. The domain must be verified in your Resend account.
+</ParamField>
+
+### Security
+
+<ParamField path="env.CRON_SECRET_TOKEN" type="string" required>
+  A random secret string used to authenticate requests to the `/api/cron` endpoints. Set this to a long random value (e.g. generate with `openssl rand -hex 32`) and pass it as a bearer token when triggering cron jobs from your scheduler.
+</ParamField>
+
+### Server
+
+<ParamField path="env.ENVIRONMENT" type="string" default="development">
+  The runtime environment. Accepts `development` or `production`. Defaults to `development`.
+</ParamField>
+
+<ParamField path="env.PORT" type="number" default="8000">
+  The port the uvicorn or gunicorn server listens on. Defaults to `8000`. Most cloud platforms set this automatically.
+</ParamField>
+
+---
+
+## Frontend variables
+
+Copy `frontend/.env.local.example` to `frontend/.env.local` and fill in the values below. These variables are embedded into the JavaScript bundle at build time.
+
+<Warning>
+  Never put secret or service-role keys in frontend environment variables. All `VITE_` variables are visible to anyone who loads the app in a browser.
+</Warning>
+
+<ParamField path="env.VITE_SUPABASE_URL" type="string" required>
+  The URL of your Supabase project. Must match `SUPABASE_URL` on the backend. Used by the Supabase JS client in the browser for authentication flows.
+</ParamField>
+
+<ParamField path="env.VITE_SUPABASE_ANON_KEY" type="string" required>
+  The `anon` (public) key for your Supabase project. Must match `SUPABASE_KEY` on the backend. Safe to expose in the browser — access is controlled by Row Level Security policies. Used by the Supabase JS client for sign-in, sign-up, and session management.
+</ParamField>
+
+<ParamField path="env.VITE_API_URL" type="string" required>
+  The base URL of the running FastAPI backend, without a trailing slash. For local development this is typically `http://localhost:8000`. In production, set it to your deployed backend URL, for example `https://api.yourdomain.com`.
+</ParamField>
+
+---
+
+## Quick-reference table
+
+| Variable | Service | Required | Default |
+|---|---|---|---|
+| `SUPABASE_URL` | Supabase | Yes | — |
+| `SUPABASE_KEY` | Supabase | Yes | — |
+| `SUPABASE_SERVICE_KEY` | Supabase | Yes | — |
+| `OPENAI_API_KEY` | OpenAI | Yes | — |
+| `NEWSAPI_KEY` | NewsAPI.ai | Yes | — |
+| `RESEND_API_KEY` | Resend | Yes | — |
+| `RESEND_FROM_EMAIL` | Resend | Yes | — |
+| `CRON_SECRET_TOKEN` | Backend security | Yes | — |
+| `ENVIRONMENT` | Backend server | No | `development` |
+| `PORT` | Backend server | No | `8000` |
+| `VITE_SUPABASE_URL` | Frontend / Supabase | Yes | — |
+| `VITE_SUPABASE_ANON_KEY` | Frontend / Supabase | Yes | — |
+| `VITE_API_URL` | Frontend / Backend | Yes | — |

@@ -1,0 +1,97 @@
+---
+title: "Chat with Quill: AI-powered news conversations"
+description: "Ask Quill anything about your article library — get factual answers, article summaries, and trend analysis backed by your personal news feed."
+---
+
+Quill is Quorent's AI news correspondent. Powered by LangChain and OpenAI, Quill reads from your personal article library to answer questions, surface patterns across your reading, and synthesize what's happening in the topics you follow. Every answer is grounded in articles Quorent has actually fetched for you — Quill does not pull information from outside your library.
+
+To open the chat, click **Ask Quill** in the Dashboard header or sidebar, or navigate directly to the Chat page.
+
+## Starting a conversation
+
+When you open the chat for the first time (or start a new conversation), Quill displays a set of suggested prompts to help you get started:
+
+- "Summarise my articles from this week"
+- "What are the key trends in my recent articles?"
+- "Which topics appeared most frequently?"
+- "Give me a quick briefing on today's news"
+
+Click any prompt to send it immediately, or type your own question in the input bar at the bottom. Press **Enter** to send, or **Shift+Enter** to add a new line.
+
+When you send your first message in a new session, Quill automatically titles the conversation using the opening text (up to 50 characters). You do not need to name conversations yourself.
+
+## How Quill finds relevant articles
+
+Every time you ask a question, Quill classifies your intent into one of three categories and adjusts how it searches your library:
+
+<AccordionGroup>
+  <Accordion title="Fact questions" icon="magnifying-glass">
+    For specific, factual questions (the default), Quill runs a **semantic vector search** across your article library. It converts your question into an embedding and matches it against stored article embeddings, returning the most relevant results regardless of exact keyword overlap. Up to 8 highly relevant articles are used to compose the answer.
+  </Accordion>
+  <Accordion title="Summary questions" icon="list">
+    Questions that include words like "summarise", "this week", "today", "latest", or "recent" are routed to the **summary** intent. Quill fetches up to 12 of your articles from the past 7 days (ordered by fetch date) and uses those as context.
+  </Accordion>
+  <Accordion title="Trend questions" icon="chart-line">
+    Questions about patterns — such as "which topics appeared most frequently", "what are the trends", or "what themes recur" — are handled with the **trend** intent. Quill looks at up to 25 articles from the past 14 days to identify recurring topics and shifts over time.
+  </Accordion>
+</AccordionGroup>
+
+## What Quill can answer
+
+<CardGroup cols={2}>
+  <Card title="Factual questions" icon="circle-question">
+    Ask about specific events, people, or claims covered in your articles. Quill cites the relevant sources directly in its reply.
+  </Card>
+  <Card title="Article summaries" icon="file-lines">
+    Ask Quill to summarize what happened this week, or to give you a briefing on a specific topic covered across multiple articles.
+  </Card>
+  <Card title="Trend analysis" icon="arrow-trend-up">
+    Ask which topics have come up most frequently, what patterns are emerging, or how a story has developed over the past two weeks.
+  </Card>
+  <Card title="Article-specific chat" icon="newspaper">
+    You can chat about a specific article. When an article ID is passed, Quill reads that article in full before searching for related context.
+  </Card>
+</CardGroup>
+
+## Quill's persona and guidelines
+
+Quill follows a strict set of response guidelines:
+
+- Answers are grounded in your articles. Quill does not invent facts or add claims not supported by the retrieved content.
+- If two sources disagree, Quill flags the disagreement and cites both.
+- If the context only partially answers your question, Quill states clearly what is supported and what remains unknown.
+- If there is no relevant information at all, Quill says so explicitly rather than guessing.
+- Responses are written in plain, natural English — direct and clear, without formal jargon or excessive length.
+
+## Sources
+
+Each Quill response includes a **Sources** section listing the articles used to compose the answer. Up to 5 sources are shown, ranked by relevance. Each source is a clickable link that opens the original article in a new tab.
+
+## Managing conversations
+
+The left sidebar lists all your past conversations. Each entry shows the conversation title and the date it was last updated. You can:
+
+- Click any conversation to resume it — Quill remembers the full message history.
+- Click **+ New conversation** to start fresh.
+- Hover over a conversation and click the trash icon to delete it permanently.
+
+<Warning>
+  Deleting a conversation is permanent. The message history cannot be recovered.
+</Warning>
+
+## Tips for effective questions
+
+<AccordionGroup>
+  <Accordion title="Be specific about timeframes">
+    Include phrases like "this week", "in the last 14 days", or "today" to help Quill focus on the most relevant recent articles instead of searching the full library.
+  </Accordion>
+  <Accordion title="Use trend language for pattern questions">
+    Phrases like "most frequently", "what trends", "which themes", or "what patterns" trigger Quill's trend analysis mode, which looks across a broader set of articles over a longer window.
+  </Accordion>
+  <Accordion title="Ask follow-up questions">
+    Quill retains the full conversation history. You can ask a broad question first, then drill down with follow-ups like "Tell me more about the second point" or "Which article covers that in most detail?"
+  </Accordion>
+  <Accordion title="Ask for more depth when needed">
+    Quill defaults to concise answers. If you want a fuller breakdown, simply ask: "Can you expand on that?" or "Give me more detail."
+  </Accordion>
+</AccordionGroup>

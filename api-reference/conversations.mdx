@@ -1,0 +1,203 @@
+---
+title: 'REST API endpoints for conversations'
+description: 'List, retrieve, and delete your Quill chat conversations and their full message history. Conversations are created automatically by POST /api/chat.'
+---
+
+The conversations endpoints let you manage the chat sessions created when you interact with Quill. Each conversation holds an ordered list of user and assistant messages. New conversations are created automatically by the [chat endpoint](/api-reference/chat) — you do not create them directly here. You can list all your conversations with pagination, fetch the complete message history for a single conversation, or delete a conversation and all its messages. All routes require a valid Bearer token; see [Authentication](/api-reference/authentication) for details.
+
+## GET /api/conversations
+
+Returns a paginated list of conversations belonging to the authenticated user, sorted by most recently updated first.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Query parameters
+
+<ParamField query="limit" type="number" default="20">
+  Number of conversations to return per page. Must be between `1` and `100`.
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of conversations to skip before returning results. Use with `limit` for pagination.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="conversations" type="object[]" required>
+  Array of conversation summary items.
+  <Expandable title="conversation properties">
+    <ResponseField name="id" type="string" required>
+      Unique conversation identifier (UUID).
+    </ResponseField>
+    <ResponseField name="user_id" type="string" required>
+      ID of the user who owns this conversation.
+    </ResponseField>
+    <ResponseField name="title" type="string" required>
+      Auto-generated title derived from the opening message.
+    </ResponseField>
+    <ResponseField name="created_at" type="string" required>
+      ISO 8601 timestamp of conversation creation.
+    </ResponseField>
+    <ResponseField name="updated_at" type="string" required>
+      ISO 8601 timestamp of the most recent message or update. Used for sort order.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="number" required>
+  Total number of conversations for this user.
+</ResponseField>
+
+<ResponseField name="limit" type="number" required>
+  The `limit` value used for this response.
+</ResponseField>
+
+<ResponseField name="offset" type="number" required>
+  The `offset` value used for this response.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` when additional pages are available.
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET "https://your-api/api/conversations?limit=20&offset=0" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## GET /api/conversations/{conversation_id}
+
+Returns a single conversation by its UUID, including every message in chronological order (oldest first).
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+### Path parameters
+
+<ParamField path="conversation_id" type="string" required>
+  UUID of the conversation to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" type="string" required>
+  Unique conversation identifier.
+</ResponseField>
+
+<ResponseField name="user_id" type="string" required>
+  ID of the owning user.
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Auto-generated conversation title.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of conversation creation.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of the most recent update.
+</ResponseField>
+
+<ResponseField name="messages" type="object[]" required>
+  All messages in this conversation, ordered by `created_at` ascending.
+  <Expandable title="message properties">
+    <ResponseField name="id" type="string" required>
+      Unique message identifier (UUID).
+    </ResponseField>
+    <ResponseField name="conversation_id" type="string" required>
+      ID of the parent conversation.
+    </ResponseField>
+    <ResponseField name="role" type="string" required>
+      Who authored the message. One of `"user"` or `"assistant"`.
+    </ResponseField>
+    <ResponseField name="content" type="string" required>
+      Text content of the message.
+    </ResponseField>
+    <ResponseField name="sources" type="object[]">
+      Source citations attached to an assistant message. Each object contains `title`, `url`, and optionally `relevance`. May be `null` for user messages.
+    </ResponseField>
+    <ResponseField name="article_id" type="string">
+      UUID of an article the message was grounded in, if one was specified in the chat request. May be `null`.
+    </ResponseField>
+    <ResponseField name="created_at" type="string" required>
+      ISO 8601 timestamp of message creation.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `404 Not Found` | No conversation with the given ID exists for this user. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X GET https://your-api/api/conversations/c1d2e3f4-a5b6-7890-abcd-ef1234567890 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+---
+
+## DELETE /api/conversations/{conversation_id}
+
+Permanently deletes a conversation and all of its messages. The conversation must belong to the authenticated user. This operation cannot be undone.
+
+**Authentication:** Bearer token required in the `Authorization` header.
+
+<Warning>
+  All messages within the conversation are deleted as part of a cascade delete. This cannot be reversed.
+</Warning>
+
+### Path parameters
+
+<ParamField path="conversation_id" type="string" required>
+  UUID of the conversation to delete.
+</ParamField>
+
+### Response
+
+Returns `204 No Content` with an empty body on success.
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `401 Unauthorized` | Missing or invalid Bearer token. |
+| `403 Forbidden` | The conversation exists but belongs to a different user. |
+| `404 Not Found` | No conversation with the given ID exists. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
+
+### Example
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://your-api/api/conversations/c1d2e3f4-a5b6-7890-abcd-ef1234567890 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>

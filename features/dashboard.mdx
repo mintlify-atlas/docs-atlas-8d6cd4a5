@@ -1,0 +1,87 @@
+---
+title: "Quorent Dashboard: your daily news at a glance"
+description: "Your personal command center showing today's digest, your curated article feed, interest tags, and email delivery settings — all in one place."
+---
+
+The Quorent Dashboard is the first thing you see after signing in. It brings together every part of your personalized news experience: a snapshot of the latest email digest, a paginated feed of your curated articles, the interests that drive what gets fetched, and the delivery schedule you've configured. Everything you need to stay current is visible without leaving this single screen.
+
+## Header and quick actions
+
+At the top of the Dashboard you'll find the date, your display name, and two quick-action buttons.
+
+- **Settings** (gear icon) — opens your account and preferences page.
+- **Ask Quill** — takes you directly to the AI chat interface so you can ask questions about your articles without navigating away first.
+
+## At-a-glance stats
+
+Three numbers are displayed prominently beneath your greeting:
+
+| Stat | What it shows |
+|---|---|
+| **Articles** | Total articles fetched into your library |
+| **Interests** | Number of interest topics you've configured |
+| **Last Digest** | Date your most recent email digest was created |
+
+These update automatically each time the page loads.
+
+## Left sidebar
+
+The sidebar on the left (or below the stats on smaller screens) contains three panels stacked vertically.
+
+### Today's digest
+
+The **Latest Digest** panel shows a summary of the most recent email digest prepared for you. It displays:
+
+- A status badge — `queued`, `sent`, or `failed`
+- An AI-generated summary of the top articles
+- The creation date, send time (if sent), and article count
+
+If the digest used cached data because live news could not be fetched, a **Cached data** label appears next to the status badge. If no digest has been prepared yet, the panel shows a message letting you know your first one is on its way.
+
+### Your interests
+
+Below the digest panel is a list of the interest tags that control which topics Quorent fetches news for. Each tag is shown as a small label. To add or remove interests, go to [Interests settings](/configuration/interests).
+
+### Delivery info
+
+The **Delivery** section shows a compact summary of your email digest preferences:
+
+- Whether email digests are **Enabled** or **Disabled**
+- Your preferred **delivery time** (if set)
+- Your **timezone**
+
+You can change these at any time from [Settings](/configuration/account).
+
+<Info>
+  A "Meet Quill" prompt also appears at the bottom of the sidebar as a shortcut to the AI chat. Clicking **Ask Quill** there takes you to the same place as the header button.
+</Info>
+
+## Article feed
+
+The main column shows your **Recent Articles** — the articles Quorent has fetched based on your interests. Each article card displays:
+
+- Source publication name
+- Article title and short description
+- Published date and author
+- Sentiment label (Positive, Neutral, or Negative)
+
+Clicking any article card opens the original article in a new tab.
+
+### Pagination
+
+Articles are loaded **8 per page**. Use the pagination controls at the bottom of the feed to move between pages. The total article count is shown in the top-right corner of the feed section.
+
+<Tip>
+  If the feed is empty, Quorent is still warming up. Your first curated articles appear after your next scheduled digest runs.
+</Tip>
+
+## Navigating from the Dashboard
+
+<CardGroup cols={2}>
+  <Card title="Ask Quill" icon="comments" href="/features/ai-chat">
+    Open the AI chat to ask questions about your articles, get summaries, or explore trends.
+  </Card>
+  <Card title="Settings" icon="gear" href="/configuration/account">
+    Update your interests, email preferences, digest time, and timezone.
+  </Card>
+</CardGroup>

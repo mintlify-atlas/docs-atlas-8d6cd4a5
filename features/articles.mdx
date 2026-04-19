@@ -1,0 +1,95 @@
+---
+title: "Your article feed: browsing and searching news"
+description: "Quorent fetches articles daily based on your interests, giving you a searchable, filterable library of news tailored to what you follow."
+---
+
+Your article feed is a personal library of news content that Quorent builds for you automatically. Each day, Quorent queries news sources for content matching your interest topics and stores the results in your library. The feed is private to your account — every article is tied to your user ID so you only ever see your own content.
+
+## Article metadata
+
+Each article in your library includes the following fields:
+
+| Field | Description |
+|---|---|
+| **Title** | Headline of the article |
+| **Source** | Name of the publication |
+| **Author** | Byline, if available |
+| **Published date** | When the article was originally published |
+| **Fetch date** | The date Quorent retrieved the article |
+| **Description** | Short excerpt or lede |
+| **Sentiment** | Positive, Neutral, or Negative, derived from a sentiment score |
+| **Concepts** | Key topics and entities extracted from the article |
+| **Social shares** | Share count at time of fetch, where available |
+
+The full body text of each article is also stored and used by Quill for AI-powered answers.
+
+## Browsing the feed
+
+The article feed on your [Dashboard](/features/dashboard) shows **8 articles per page**. Use the pagination controls at the bottom of the feed to move through your library. The total number of articles in your library is displayed above the feed.
+
+Each article card in the feed shows the source, title, description, published date, author, and sentiment label. Clicking a card opens the original article in a new tab.
+
+## Sorting and filtering
+
+When accessing articles via the API, you have full control over how results are ordered and filtered:
+
+**Sorting options**
+
+- Sort by `created_at` (when Quorent fetched the article) or `published_at` (original publication date)
+- Order results `asc` (oldest first) or `desc` (newest first, the default)
+
+**Filtering options**
+
+- Filter by **source** to see articles from a specific publication
+- Filter by **fetch date** (in `YYYY-MM-DD` format) to see what was retrieved on a particular day
+
+```bash cURL
+# Get articles sorted by publish date, filtered to a specific source
+curl --request GET \
+  --url 'https://your-quorent-instance.com/api/articles?sort=published_at&order=desc&source=Reuters' \
+  --header 'Authorization: Bearer YOUR_TOKEN'
+```
+
+The API returns up to **20 articles per request** by default (configurable up to 100). Pagination is handled via `limit` and `offset` query parameters.
+
+## Semantic search
+
+Beyond browsing, you can search your library by meaning rather than by keyword. Quorent's semantic search converts your query into a vector embedding and compares it against the embeddings stored for each article, returning results ranked by conceptual similarity.
+
+```bash cURL
+curl --request POST \
+  --url https://your-quorent-instance.com/api/articles/search \
+  --header 'Authorization: Bearer YOUR_TOKEN' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "query": "central bank interest rate decisions",
+    "limit": 10,
+    "threshold": 0.7
+  }'
+```
+
+Search results include a `similarity` score between 0 and 1. The `threshold` parameter controls the minimum similarity required for a result to be returned. Results are ranked from most to least similar.
+
+<Tip>
+  Semantic search finds conceptually related articles even when they don't share the exact words in your query. For example, searching for "monetary policy" will surface articles about interest rates, inflation targets, and central bank decisions.
+</Tip>
+
+## Reading a full article
+
+The list endpoint returns article metadata without the full body text. To retrieve the complete content of an article, fetch it by ID:
+
+```bash cURL
+curl --request GET \
+  --url https://your-quorent-instance.com/api/articles/ARTICLE_ID \
+  --header 'Authorization: Bearer YOUR_TOKEN'
+```
+
+The full response includes the `body` field with the complete article text. This is the same content Quill uses when answering questions about a specific article.
+
+## Deduplication
+
+Quorent deduplicates your article library automatically. An article is considered a duplicate if another entry for your account already has the same URL. This means the same story from the same source will never appear twice in your feed, even if it was fetched on multiple days.
+
+<Info>
+  Deduplication is scoped to your account. The same article URL can exist in different users' libraries independently.
+</Info>

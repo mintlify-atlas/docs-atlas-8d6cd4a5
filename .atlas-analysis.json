@@ -1,23 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Quorent",
+  "projectType": "saas",
+  "projectName": "Quorent",
+  "projectDescription": "An AI-powered news assistant that curates personalized article feeds and delivers daily email digests, with a conversational AI named Quill for exploring your news.",
   "theme": "almond",
-  "colors": {
-    "primary": "#8727fc",
-    "light": "#8c51fc"
-  },
-  "favicon": "https://media.brand.dev/c2814358-765c-46db-a307-7399359c6f69.svg",
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/derrick-code10/quorent"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/derrick-code10/quorent"
-    }
-  },
+  "primaryColor": "#8727fc",
+  "lightColor": "#8c51fc",
+  "darkColor": null,
   "navigation": {
     "tabs": [
       {
@@ -83,5 +71,32 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Personalized news feed curated from thousands of sources via NewsAPI.ai based on user-defined interests",
+    "AI assistant named Quill powered by LangChain and OpenAI for conversational news exploration",
+    "Daily email digests with AI-generated summaries delivered at user-preferred times and timezones",
+    "Semantic vector search over articles using OpenAI embeddings stored in Supabase",
+    "Google OAuth authentication with Supabase for secure, passwordless sign-in",
+    "Onboarding flow for selecting interests and configuring digest delivery preferences",
+    "Cron-based automation for creating and sending scheduled digests with fallback cache support"
+  ],
+  "publicApiSurface": [
+    "GET /api/users/me",
+    "PUT /api/users/me",
+    "DELETE /api/users/me",
+    "GET /api/articles",
+    "GET /api/articles/{article_id}",
+    "POST /api/articles/search",
+    "POST /api/chat",
+    "GET /api/conversations",
+    "GET /api/conversations/{conversation_id}",
+    "DELETE /api/conversations/{conversation_id}",
+    "GET /api/email-digests",
+    "GET /api/email-digests/{digest_id}",
+    "POST /api/email-digests/{digest_id}/send",
+    "POST /api/cron/create-digests",
+    "POST /api/cron/send-digests",
+    "POST /api/cron/cleanup"
+  ]
 }
